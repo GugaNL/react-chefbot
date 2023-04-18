@@ -1,5 +1,4 @@
-import Home from './components/templates/Home';
-
+import Home from "./components/templates/Home";
 
 function App() {
   return (

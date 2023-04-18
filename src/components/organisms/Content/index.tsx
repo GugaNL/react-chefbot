@@ -1,13 +1,38 @@
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import parse from "html-react-parser";
+import { useTranslation } from "react-i18next";
 import "./styles.css";
+import { LanguageContext } from "../../../context";
 import { openai } from "../../../constants";
 
 const Content = () => {
+  const { t } = useTranslation();
+  const { currentLanguage } = useContext(LanguageContext);
   const [isLoading, setIsLoading] = useState(false);
   const [ingredients, setIngredients] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState(false);
+
+  const translateRecipe = async () => {
+    setIsLoading(true);
+    const completion = await openai.createCompletion({
+      model: "text-davinci-003",
+      prompt: `Converta todo conteúdo de ${searchResult} para ${currentLanguage}`,
+      max_tokens: 1000,
+      temperature: 0.7,
+      top_p: 1,
+      frequency_penalty: 0.2,
+      presence_penalty: 0.0,
+    });
+    setSearchResult(completion.data.choices[0].text);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    if (currentLanguage && searchResult) {
+      translateRecipe();
+    }
+  }, [currentLanguage]);
 
   const generateRecipe = async (e: any) => {
     e.preventDefault();
@@ -16,8 +41,9 @@ const Content = () => {
     setSearchResult(null);
     const completion = await openai.createCompletion({
       model: "text-davinci-003",
-      //prompt: `Show a recipe made with ${ingredients}, inside a html div with class named 'ingredients' create a main header with the recipe name and other header with the word 'Ingredientes'`,
-      prompt: `apresente uma receita feita com ${ingredients}, dentro de uma div com classe 'ingredients' crie um cabeçalho html principal com o nome da receita e outro cabeçalho html com a palavra 'Ingredientes' e em seguida liste os ingredientes em uma html ul li, faça o mesmo com o modo de preparo`,
+      prompt: `Show a food recipe made with ${ingredients}, inside a html div with class named 'ingredients' create a main header with the recipe name and other html header with the word 'Ingredients' and list the ingredients in a html ul li, do the same with the recipe prepare and put it in the same tag 'ingredients'. All texts need to in ${t(
+        "home.language"
+      )}`,
       max_tokens: 1000,
       temperature: 0.7,
       top_p: 1,
@@ -38,10 +64,10 @@ const Content = () => {
   return (
     <div className="container pt-5">
       <div className="pt-5">
-        <h1 className="text-center m-4">Sem criatividade para sua refeição?</h1>
+        <h1 className="text-center m-4">{t("home.creativityTitle")}</h1>
         <p className="text-center pt-5">
-          Digite os ingredientes que você possui e deixe que o <b>ChefBot</b>{" "}
-          monte uma deliciosa refeição!
+          {t("home.digitYourIngredientsTextOne")} <b>ChefBot</b>{" "}
+          {t("home.digitYourIngredientsTextTwo")}
         </p>
       </div>
 
@@ -50,7 +76,7 @@ const Content = () => {
           <div>
             <textarea
               className="shadow-none form-control w-75 mx-auto rounded text-area-input"
-              placeholder="Ex. arroz, ovos, macarrão ..."
+              placeholder={`${t("home.exampleWordsText")}`}
               style={{ height: "100px" }}
               onChange={(e) => onChangeInput(e.target.value)}
             />
@@ -61,19 +87,21 @@ const Content = () => {
               className="vw-50 btn-lg text-center m-3 p-2 recipe-btn"
               onClick={(e) => generateRecipe(e)}
             >
-              {isLoading ? "Gerando receita" : "Gerar Receita"}
+              {isLoading
+                ? `${t("home.generatingRecipeText")}`
+                : `${t("home.generateRecipeText")}`}
             </button>
             <button
               className="vw-50 btn-lg text-center m-3 p-2 recipe-btn-clear"
               onClick={() => setIngredients("")}
             >
-              Limpar
+              {t("home.clearText")}
             </button>
           </div>
         </form>
         {errorMessage && (
           <div className="alert alert-danger" role="alert">
-            Necessário informar alguns ingredientes!
+            {t("home.informSomeIngredients")}
           </div>
         )}
         {isLoading && (
@@ -83,7 +111,7 @@ const Content = () => {
               style={{ width: "3rem", height: "3rem" }}
               role="status"
             >
-              <span className="visually-hidden">Carregando...</span>
+              <span className="visually-hidden">{t("home.loading")}</span>
             </div>
           </div>
         )}

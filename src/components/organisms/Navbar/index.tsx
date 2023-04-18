@@ -1,4 +1,5 @@
 import logo from "../../../assets/chef.png";
+import I18n from "../../atoms/I18n";
 import "./styles.css";
 
 const Navbar = () => {
@@ -9,6 +10,7 @@ const Navbar = () => {
           <img src={logo} alt="logo" width={50} height={54} />
           <b className="text-white">ChefBot</b>
         </a>
+          <I18n />
       </div>
     </nav>
   );
